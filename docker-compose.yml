@@ -1,0 +1,144 @@
+volumes:
+  grafana-data:
+  prometheus-data:    
+  loki-data:
+
+services:
+  loki:
+    image: grafana/loki:2.8.2
+    container_name: loki
+    restart: unless-stopped
+    volumes:
+    - ./Monitoreo/loki-config.yml:/mnt/config/loki-config.yml
+    - ./Monitoreo/loki-data:/tmp/loki
+    ports:
+    - 3100:3100
+    command: 
+    - '-config.file=/mnt/config/loki-config.yml'
+    networks:
+      - skafs_network
+  
+  grafana:
+    image: grafana/grafana:10.0.2
+    container_name: grafana
+    restart: unless-stopped
+    volumes:
+    - ./Monitoreo/grafana-data:/var/lib/grafana
+    ports:
+    - 3000:3000
+    networks:
+      - skafs_network
+
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+    - ./Monitoreo/prometheus.yml:/etc/prometheus/prometheus.yml
+    - ./Monitoreo/prometheus-data:/prometheus
+    ports:
+    - 9090:9090
+    command:
+    - '--config.file=/etc/prometheus/prometheus.yml'
+    - '--storage.tsdb.path=/prometheus'
+    - '--storage.tsdb.retention.time=1y'
+    - '--web.enable-lifecycle'
+    networks:
+      - skafs_network
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:v1.6.1
+    container_name: node_exporter
+    restart: unless-stopped
+    ports:
+    - 9100:9100
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    command: 
+      - '--path.procfs=/host/proc' 
+      - '--path.sysfs=/host/sys'
+      - --collector.processes
+      - --collector.filesystem.ignored-mount-points
+      - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+    networks:
+      - skafs_network
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.1
+    container_name: cadvisor
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    volumes:
+      # Monta el sistema de archivos raíz del host
+      - /:/rootfs:ro
+      # Monta el socket de Docker para obtener información en tiempo real
+      - /var/run:/var/run:rw
+      # Monta los datos de Docker para acceder a los metadatos de contenedores
+      - /var/lib/docker:/var/lib/docker:ro
+      # Proporciona acceso a las estadísticas del kernel
+      - /sys:/sys:ro
+    privileged: true
+    networks:
+      - skafs_network
+
+  skafs-cloud:
+    build:
+      context: ./IoT
+      dockerfile: ./cloud/SKAFS/Dockerfile
+    container_name: skafs-cloud
+    networks:
+      - skafs_network
+    volumes:
+      - ./Logs:/logs
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"  
+    ports:
+      - 8011:8011 #Prometheus
+      - 5001:5001 #Socket
+    command: ["python", "-m", "cloud.skafs_cloud"]
+
+  skafs-gateway:
+    build:
+      context: ./IoT
+      dockerfile: ./gateway/SKAFS/Dockerfile
+    container_name: skafs-gateway
+    depends_on:
+      - skafs-cloud
+    networks:
+      - skafs_network
+    volumes:
+      - ./Logs:/logs
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"  
+    ports:
+      - 8010:8010 #Prometheus
+      - 5000:5000 #Socket
+    command: ["python", "-m", "gateway.skafs_gateway"]
+  
+  skafs-device:
+    build:
+      context: ./IoT
+      dockerfile: ./device/SKAFS/Dockerfile
+    depends_on:
+      - skafs-gateway
+    networks:
+      - skafs_network
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"  
+    volumes:
+      - ./Logs:/logs
+    ports:
+      - 8012:8012 #Prometheus
+    command: ["python", "-m", "device.skafs_device"]
+
+networks:
+  skafs_network:
+    driver: bridge

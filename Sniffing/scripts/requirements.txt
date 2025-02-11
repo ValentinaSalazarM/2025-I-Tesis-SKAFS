@@ -1,0 +1,4 @@
+scapy
+python-dateutil
+pycryptodome
+locust

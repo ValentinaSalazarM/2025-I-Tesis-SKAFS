@@ -1,0 +1,15 @@
+# Usa la imagen base oficial de Python
+FROM python:3.9-slim
+
+# Instalar tcpdump y dependencias
+RUN apt-get update && apt-get install -y tcpdump && rm -rf /var/lib/apt/lists/*
+
+# Copiar el script y los requisitos
+COPY ./scripts /scripts
+WORKDIR /scripts
+
+# Instalar dependencias de Python
+RUN pip install -r requirements.txt
+
+# Especifica el comando de inicio para el Cloud
+CMD ["python", "-m", "replicate_script"]

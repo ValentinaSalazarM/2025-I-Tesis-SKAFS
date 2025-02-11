@@ -1,0 +1,4 @@
+ecdsa
+fastecdsa
+pycryptodome
+prometheus_client

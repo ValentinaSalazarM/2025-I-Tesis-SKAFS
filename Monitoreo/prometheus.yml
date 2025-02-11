@@ -1,0 +1,28 @@
+global:
+  scrape_interval:     15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+    - targets: ['prometheus:9090']
+    
+  - job_name: 'cadvisor'
+    static_configs:
+    - targets: ['cadvisor:8080']
+
+  - job_name: 'node_exporter'
+    static_configs:
+    - targets: ['node_exporter:9100']    
+
+  - job_name: 'iot_services_cloud'
+    static_configs:
+    - targets: ['skafs-cloud:80011']
+
+  - job_name: 'iot_services_gateway'
+    static_configs:
+    - targets: ['skafs-gateway:80010']
+
+  - job_name: 'iot_services_device'
+    static_configs:
+    - targets: ['skafs-device:80012']

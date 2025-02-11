@@ -1,0 +1,5 @@
+Monitoreo/grafana-data/
+Monitoreo/prometheus-data/
+Monitoreo/loki-data/
+Logs/
+Sniffing/shared_data

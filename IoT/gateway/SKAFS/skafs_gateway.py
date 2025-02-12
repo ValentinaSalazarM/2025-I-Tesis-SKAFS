@@ -220,8 +220,9 @@ def handle_mutual_authentication(client_socket, message):
             ca_response.get("status") == "failed"
             or ca_response.get("status") == "error"
         ):
+            error_message = ca_response.get("message")
             raise PermissionError(
-                "El proceso de autenticación ha sido detenido por el CA."
+                f"El proceso de autenticación ha sido detenido por el CA: {error_message}" 
             )
         logger.info("[AUTH] Parámetros enviados a la CA para autenticación mutua.")
 
@@ -289,8 +290,9 @@ def handle_mutual_authentication(client_socket, message):
             ca_response.get("status") == "failed"
             or ca_response.get("status") == "error"
         ):
+            error_message = ca_response.get("message")
             raise PermissionError(
-                "El proceso de autenticación ha sido detenido por el CA."
+                f"El proceso de autenticación ha sido detenido por el CA: {error_message}" 
             )
 
         # Paso 9: Recibir M_3 de la CA
@@ -653,9 +655,7 @@ if __name__ == "__main__":
     # Inicia el servidor de métricas Prometheus
     logger.info("Iniciando el servidor de métricas de Prometheus en el puerto 8010.")
     start_http_server(8010)
-
     # Realiza el registro ante el CA
     gateway_registration()
-
     # Inicia el socket
     start_gateway_socket()

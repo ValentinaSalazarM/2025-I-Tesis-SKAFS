@@ -2,6 +2,8 @@ volumes:
   grafana-data:
   prometheus-data:    
   loki-data:
+  shared_data:  # Volumen compartido entre ambos sniffers
+    driver: local
 
 services:
   loki:
@@ -83,6 +85,35 @@ services:
     networks:
       - skafs_network
 
+  locust:
+    image: locustio/locust
+    ports:
+      - "8089:8089"  # Interfaz web de Locust
+      - "5557:5557"  # Puerto para comunicación entre workers y master
+      - "5558:5558"
+    networks:
+      - skafs_network
+    volumes:
+      - ./Sniffing/scripts/:/mnt/locust
+    command: >
+      -f /mnt/locust/load_tests.py --host skafs-gateway --web-port 8089
+    environment:
+      - LOCUST_LOCUSTFILE=/mnt/locust/load_tests.py
+      - LOCUST_WEB_PORT=8089
+    depends_on:
+      - skafs-gateway  # Espera a que el servidor de sockets esté listo
+
+  locust-metrics-exporter:
+    image: containersol/locust_exporter
+    ports:
+      - "9646:9646"
+    networks:
+      - skafs_network
+    environment:
+      - LOCUST_EXPORTER_URI=http://locust:8089
+    depends_on:
+      - locust  # Espera a que Locust esté listo antes de iniciar
+
   skafs-cloud:
     build:
       context: ./IoT
@@ -138,6 +169,32 @@ services:
     ports:
       - 8012:8012 #Prometheus
     command: ["python", "-m", "device.skafs_device"]
+
+  sniffer-capture:
+    build:
+      context: ./Sniffing
+      dockerfile: Dockerfile.capture
+    network_mode: host # Capturar tráfico del host
+    volumes:
+      - ./Sniffing/shared_data:/shared_data  # Volumen compartido
+      - ./Logs:/logs
+    cap_add:
+      - NET_ADMIN # Permiso para sniffing
+    command: [ "python", "-m", "capture_script" ]
+    restart: on-failure
+
+  sniffer-replicate:
+    build:
+      context: ./Sniffing
+      dockerfile: Dockerfile.replicate
+    networks:
+      - skafs_network
+    volumes:
+      - ./Sniffing/shared_data:/shared_data  # Mismo volumen compartido
+      - ./Logs:/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: ["python", "-m", "replicate_script"]
+    restart: on-failure
 
 networks:
   skafs_network:

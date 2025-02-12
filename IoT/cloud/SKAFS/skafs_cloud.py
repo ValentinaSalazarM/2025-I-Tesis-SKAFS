@@ -306,7 +306,7 @@ def handle_mutual_authentication(gateway_socket, decoded_message):
         if not current_iot_identity or not current_gateway_identity:
             logger.error("[AUTH] No hay sesión activa. Autenticación requerida.")
             raise PermissionError(
-                "El Gateway no está autenticado con el CA, se restringe el acceso."
+                "El Gateway o el Device no está autenticado con el CA, se restringe el acceso."
             )
 
         logger.info(

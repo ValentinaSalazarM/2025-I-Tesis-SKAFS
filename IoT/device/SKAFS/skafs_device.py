@@ -173,8 +173,9 @@ def mutual_authentication():
         logger.info("[AUTH] Mensaje cifrado enviado al Gateway.")
 
         if response.get("status") == "failed" or response.get("status") == "error":
+            error_message = response.get("message")
             raise PermissionError(
-                "El proceso de autenticación ha sido detenido por el Gateway o por el CA."
+                f"El proceso de autenticación ha sido detenido por el Gateway o por el CA: {error_message}" 
             )
 
         # Paso 4: Recibir claves y sincronización G_M_2, Sync_IoT_G del Gateway
@@ -192,8 +193,9 @@ def mutual_authentication():
         response = send_and_receive_persistent_socket(payload)
         logger.info("[AUTH] Claves obfuscadas enviadas al Gateway.")
         if response.get("status") == "failed" or response.get("status") == "error":
+            error_message = response.get("message")
             raise PermissionError(
-                "El proceso de autenticación ha sido detenido por el Gateway o por el CA."
+                f"El proceso de autenticación ha sido detenido por el Gateway o por el CA: {error_message}" 
             )
 
         # Paso 6: Recibir mensaje M_4 del Gateway y actualizar parámetros

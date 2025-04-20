@@ -1,10 +1,17 @@
-import socket
-import json
-from locust import User, task, between, events
 import logging
+import socket
+import time
+import json
 import os
 
+from locust import User, task, between, events
+
 # Configuración del logger
+logging.basicConfig(
+    level=logging.INFO,
+    format="SKAFS time=%(asctime)s level=%(levelname)s msg=\'%(message)s\'",
+    handlers=[logging.FileHandler("/logs/locust.log"), logging.StreamHandler()],
+)
 logger = logging.getLogger("locust")
 
 class SocketClient:
@@ -39,6 +46,7 @@ class SocketUser(User):
     def mutual_authentication(self):
         try:
             # Paso 1: Enviar mensaje "hello" al gateway
+            step_start = time.time()
             hello_message = {
                 "operation": "mutual_authentication",
                 "step": "hello",
@@ -47,6 +55,13 @@ class SocketUser(User):
 
             # Paso 2: Recibir G_r_1 del gateway
             gateway_response = self.client.receive()
+            events.request.fire(
+                request_type="socket",
+                name="mutual_auth/step_2_G_r_1",
+                response_time=(time.time() - step_start)*1000,
+                response_length=len(str(gateway_response)),
+                exception=None,
+            )
             if "G_r_1" not in gateway_response:
                 raise KeyError("Falta G_r_1 en la respuesta del gateway.")
             G_r_1 = gateway_response["G_r_1"]
@@ -65,10 +80,14 @@ class SocketUser(User):
 
             # Paso 4: Recibir G_M_2 y Sync_IoT_G del gateway
             gateway_response = self.client.receive()
-            if "G_M_2" not in gateway_response:
-                raise KeyError("Falta G_M_2 en la respuesta del gateway.")
-            G_M_2 = gateway_response["G_M_2"]
-            logger.info(f"[AUTH] G_M_2 recibido del gateway: {G_M_2}")
+            events.request.fire(
+                request_type="socket",
+                name="mutual_auth/step_4_G_M_2",
+                response_time=(time.time() - step_start)*1000,
+                response_length=len(str(gateway_response)),
+                exception=None,
+            )
+            logger.info(f"Respuesta recibida: {gateway_response}")
 
             # Paso 5: Enviar K_i_next_obfuscated al gateway
             K_i_next_obfuscated = int.from_bytes(os.urandom(8), "big")
@@ -77,28 +96,15 @@ class SocketUser(User):
 
             # Paso 6: Recibir M_4 del gateway
             gateway_response = self.client.receive()
-            if "M_4" not in gateway_response:
-                raise KeyError("Falta M_4 en la respuesta del gateway.")
-            M_4 = gateway_response["M_4"]
-            logger.info(f"[AUTH] M_4 recibido del gateway: {M_4}")
-
-            # Registrar la solicitud como exitosa
             events.request.fire(
                 request_type="socket",
-                name="mutual_authentication",
-                response_time=100,  # Tiempo de respuesta en ms (puedes calcularlo)
+                name="mutual_auth/step_6_M_4",
+                response_time=(time.time() - step_start)*1000,
                 response_length=len(str(gateway_response)),
                 exception=None,
             )
-        except KeyError as e:
-            logger.error(f"[AUTH] Clave faltante en los datos recibidos: {e}")
-            events.request.fire(
-                request_type="socket",
-                name="mutual_authentication",
-                response_time=0,
-                response_length=0,
-                exception=str(e),
-            )
+            logger.info(f"Respuesta recibida: {gateway_response}")
+
         except Exception as e:
             logger.error(f"[AUTH] Error durante la autenticación mutua: {e}")
             events.request.fire(

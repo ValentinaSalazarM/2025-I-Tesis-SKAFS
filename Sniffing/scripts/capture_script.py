@@ -11,7 +11,7 @@ import os
 # Configuración del logger
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="SKAFS time=%(asctime)s level=%(levelname)s msg=\'%(message)s\'",
     handlers=[logging.FileHandler("/logs/capture.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger("Sniffer-Capture")
@@ -180,4 +180,5 @@ def capture_loop():
 if __name__ == "__main__":
     # Verificar y crear directorios necesarios
     os.makedirs(SHARED_DIR, exist_ok=True)
+    os.makedirs("../../Logs/", mode=0o777, exist_ok=True)
     capture_loop()

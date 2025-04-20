@@ -9,7 +9,7 @@ COPY ./scripts /scripts
 WORKDIR /scripts
 
 # Instalar dependencias de Python
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Especifica el comando de inicio para el Cloud
+# Especifica el comando de inicio 
 CMD ["python", "-m", "capture_script"]

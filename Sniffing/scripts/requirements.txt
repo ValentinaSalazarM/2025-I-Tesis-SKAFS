@@ -1,4 +1,4 @@
-scapy
-python-dateutil
-pycryptodome
-locust
+locust==2.32.10
+fastecdsa==3.0.1
+scapy==2.6.1
+pycryptodome==3.21.0

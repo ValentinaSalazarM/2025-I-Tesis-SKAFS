@@ -6,7 +6,7 @@ from prometheus_client import start_http_server, Counter, Histogram
 # Configuración del logger
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="SKAFS time=%(asctime)s level=%(levelname)s msg=\'%(message)s\'",
     handlers=[logging.FileHandler("/logs/SKAFS-device.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger("Device")
@@ -113,7 +113,7 @@ def IoT_registration():
                 "T_j": T_j,
             }
             logger.info(
-                f"[REG] Registro completado exitosamente con los siguientes parámetros: {registration_parameters}"
+                f"[REG] Registro completado exitosamente."
             )
 
     except KeyError as e:
@@ -463,6 +463,7 @@ def send_and_receive_persistent_socket(message_dict):
 
 if __name__ == "__main__":
     time.sleep(15)
+    os.makedirs("../../Logs/", mode=0o777, exist_ok=True)
     # Inicia el servidor de métricas Prometheus
     logger.info("Iniciando el servidor de métricas de Prometheus en el puerto 8012.")
     start_http_server(8012)

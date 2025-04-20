@@ -5,19 +5,25 @@ import socket
 import logging
 import base64
 import random
-import base64
+
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from Crypto import Random
 
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uvicorn
 
 # Configuración del logger
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="SKAFS time=%(asctime)s level=%(levelname)s msg=\'%(message)s\'",
     handlers=[logging.FileHandler("/logs/replicate.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger("Sniffer-Replicate")
+
+# Configurar FastAPI
+app = FastAPI()
 
 # Configuración
 SHARED_DIR = "/shared_data"
@@ -265,45 +271,41 @@ def mark_file_as_processed(success=True):
     except Exception as e:
         logger.error(f"Error marcando archivo: {str(e)}")
 
-
-def user_menu():
-    """Menú interactivo para seleccionar una acción."""
+# Modelo de entrada
+class ChoiceRequest(BaseModel):
+    choice: str
+    
+@app.post("/execute")
+def execute_choice(request: ChoiceRequest):
+    """Ejecuta la acción seleccionada por el usuario."""
     global current_file
-    while True:
-        if not current_file:
-            logger.info("No hay un archivo seleccionado. Buscando archivos.")
-            files = find_analysis_files()
-            if not files:
-                logger.info("No se encontraron archivos de análisis. Esperando.")
-                time.sleep(POLL_INTERVAL)
-                continue
-
+    if not current_file:
+        logger.info("No hay un archivo seleccionado. Buscando archivos.")
+        files = find_analysis_files()
+        if files:
             current_file = os.path.join(SHARED_DIR, files[0])
             logger.info(f"Archivo seleccionado: {current_file}")
-
-        extract_parameters_from_analysis()
-        choice = "1"
-        state = False
+            extract_parameters_from_analysis()
         
-        if choice == "1":
-            direction = "device->gateway"
-            state = replicate_authentication(direction, gateway_host_skafs)
-        elif choice == "2":
-            state = replicate_send_metrics()
-        elif choice == "3":
-            current_file = ""  # Limpiar el archivo actual para buscar otro
-        elif choice == "4":
-            logger.info("Saliendo del servicio.")
-            
-        if not state:
-            logger.info(f"El ataque no ha sido exitoso.")    
+    if choice == "1":
+        direction = "device->gateway"
+        state = replicate_authentication(direction, gateway_host_skafs)
+    elif choice == "2":
+        state = replicate_send_metrics()
+    elif choice == "3":
+        current_file = ""  # Limpiar el archivo actual para buscar otro
+    elif choice == "4":
+        logger.info("Saliendo del servicio.")
         
-        current_file = ""
-        time.sleep(POLL_INTERVAL)
+    message = "El ataque fue exitoso." if state else "El ataque no ha sido exitoso."
+    return {"message": message}  
 
 if __name__ == "__main__":
     # Verificar y crear directorios necesarios
     os.makedirs(SHARED_DIR, exist_ok=True)
-
+    os.makedirs("../../Logs/", mode=0o777, exist_ok=True)
+    
     logger.info("Iniciando servicio de replicación.")
-    user_menu()
+
+    # Iniciar interfaz gráfica para que el usuario seleccione el ataque de su interés
+    uvicorn.run(app, host="0.0.0.0", port=8000)

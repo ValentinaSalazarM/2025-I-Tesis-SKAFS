@@ -15,20 +15,20 @@ scrape_configs:
     static_configs:
     - targets: ['node_exporter:9100']    
 
-  - job_name: 'iot_services_cloud'
+  - job_name: 'skafs_cloud'
     static_configs:
     - targets: ['skafs-cloud:8011']
 
-  - job_name: 'iot_services_gateway'
+  - job_name: 'skafs_gateway'
     static_configs:
     - targets: ['skafs-gateway:8010']
 
-  - job_name: 'iot_services_device'
+  - job_name: 'skafs_device'
     static_configs:
     - targets: ['skafs-device:8012']
 
-  - job_name: prometheus_scrapper
-    scrape_interval: 5s
+  - job_name: locust
+    scrape_interval: 15s
     static_configs:
     - targets:
       - locust-metrics-exporter:9646

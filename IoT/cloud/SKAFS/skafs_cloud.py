@@ -6,7 +6,7 @@ from prometheus_client import start_http_server, Counter
 # Configuración del logger
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="SKAFS time=%(asctime)s level=%(levelname)s msg=\'%(message)s\'",
     handlers=[logging.FileHandler("/logs/SKAFS-cloud.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger("Cloud")
@@ -558,6 +558,7 @@ def decode_message(encoded_message_dict):
 
 if __name__ == "__main__":
     time.sleep(5)
+    os.makedirs("../../Logs/", mode=0o777, exist_ok=True)
     # Inicia el servidor de métricas Prometheus
     logger.info("Iniciando el servidor de métricas de Prometheus en el puerto 8011.")
     start_http_server(8011, addr="0.0.0.0")

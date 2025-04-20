@@ -12,7 +12,7 @@ import os
 logging.basicConfig(
     level=logging.INFO,
     format="SKAFS time=%(asctime)s level=%(levelname)s msg=\'%(message)s\'",
-    handlers=[logging.FileHandler("/logs/capture.log"), logging.StreamHandler()],
+    handlers=[logging.FileHandler("/logs/ATTACK-capture.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger("Sniffer-Capture")
 
@@ -164,12 +164,13 @@ def capture_loop():
             # Analizar captura
             if os.path.exists(pcap_file) and os.path.getsize(pcap_file) > MIN_FILE_SIZE:
                 if analyze_pcap(pcap_file):
-                    os.rename(pcap_file, f"{pcap_file}.processed")
+                    logger.info(f"Análisis de la captura exitoso.")
                 else:
-                    os.rename(pcap_file, f"{pcap_file}.error")
+                    logger.error(f"Error en el análisis de la captura.")
             else:
                 logger.warning("Captura vacía o no creada, reintentando.")
-                os.remove(pcap_file) if os.path.exists(pcap_file) else None
+            
+            os.remove(pcap_file) if os.path.exists(pcap_file) else None
 
             time.sleep(60)
         except Exception as e:

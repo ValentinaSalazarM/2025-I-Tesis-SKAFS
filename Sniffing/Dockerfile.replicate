@@ -11,5 +11,8 @@ WORKDIR /scripts
 # Instalar dependencias de Python
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Exponer el puerto 8000 para FastAPI
+EXPOSE 8000
+
 # Especifica el comando de inicio
 CMD ["python", "-m", "replicate_script"]

@@ -7,12 +7,9 @@ import os
 from locust import User, task, between, events
 
 # Configuración del logger
-logging.basicConfig(
-    level=logging.INFO,
-    format="SKAFS time=%(asctime)s level=%(levelname)s msg=\'%(message)s\'",
-    handlers=[logging.FileHandler("/logs/locust.log"), logging.StreamHandler()],
-)
-logger = logging.getLogger("locust")
+logger = logging.getLogger("Locust")
+
+logger.info("Iniciando Locust y configuración de logging.")
 
 class SocketClient:
     def __init__(self, host, port):

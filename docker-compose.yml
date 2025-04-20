@@ -8,7 +8,7 @@ volumes:
 services:
   loki:
     image: grafana/loki:2.8.2
-    container_name: loki
+    container_name: skafs_loki
     restart: unless-stopped
     volumes:
     - ./Monitoreo/loki-config.yml:/mnt/config/loki-config.yml
@@ -22,7 +22,7 @@ services:
   
   grafana:
     image: grafana/grafana:10.0.2
-    container_name: grafana
+    container_name: skafs_grafana
     restart: unless-stopped
     volumes:
     - ./Monitoreo/grafana-data:/var/lib/grafana
@@ -33,7 +33,7 @@ services:
 
   prometheus:
     image: prom/prometheus:v2.47.0
-    container_name: prometheus
+    container_name: skafs_prometheus
     restart: unless-stopped
     volumes:
     - ./Monitoreo/prometheus.yml:/etc/prometheus/prometheus.yml
@@ -50,7 +50,7 @@ services:
 
   node_exporter:
     image: quay.io/prometheus/node-exporter:v1.6.1
-    container_name: node_exporter
+    container_name: skafs_node_exporter
     restart: unless-stopped
     ports:
     - 9100:9100
@@ -68,7 +68,7 @@ services:
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.1
-    container_name: cadvisor
+    container_name: skafs_cadvisor
     restart: unless-stopped
     ports:
       - 8080:8080
@@ -89,7 +89,7 @@ services:
     build:
       context: ./Sniffing
       dockerfile: Dockerfile.locust
-    image: custom-locust-image  # Opcional: nombre para la imagen construida
+    image: skafs-locust-image  # Opcional: nombre para la imagen construida
     ports:
       - "8089:8089"
       - "5557:5557"
@@ -105,8 +105,6 @@ services:
       - LOCUST_WEB_PORT=8089
     depends_on:
       - skafs-gateway
-    volumes:
-      - ./Logs:/logs
 
   locust-metrics-exporter:
     image: containersol/locust_exporter
@@ -139,6 +137,11 @@ services:
       - 8011:8011 #Prometheus
       - 5001:5001 #Socket
     command: ["python", "-m", "cloud.skafs_cloud"]
+    deploy:
+      resources:
+        limits:
+          cpus: '0.4'
+          memory: 10M
 
   skafs-gateway:
     build:
@@ -159,6 +162,12 @@ services:
       - 8010:8010 #Prometheus
       - 5000:5000 #Socket
     command: ["python", "-m", "gateway.skafs_gateway"]
+    deploy:
+      resources:
+        limits:
+          cpus: '0.4'
+          memory: 10M
+  
   
   skafs-device:
     build:
@@ -177,6 +186,11 @@ services:
     ports:
       - 8012:8012 #Prometheus
     command: ["python", "-m", "device.skafs_device"]
+    deploy:
+      resources:
+        limits:
+          cpus: '0.4'
+          memory: 10M
 
   sniffer-capture:
     build:
@@ -201,7 +215,9 @@ services:
       - ./Sniffing/shared_data:/shared_data  # Mismo volumen compartido
       - ./Logs:/logs
       - /var/run/docker.sock:/var/run/docker.sock
-    command: ["python", "-m", "replicate_script"]
+    ports:
+      - "8000:8000"  # Exponer el puerto de FastAPI
+    command: ["uvicorn", "replicate_script:app", "--host", "0.0.0.0", "--port", "8000"]
     restart: on-failure
 
 networks:

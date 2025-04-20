@@ -18,7 +18,7 @@ import uvicorn
 logging.basicConfig(
     level=logging.INFO,
     format="SKAFS time=%(asctime)s level=%(levelname)s msg=\'%(message)s\'",
-    handlers=[logging.FileHandler("/logs/replicate.log"), logging.StreamHandler()],
+    handlers=[logging.FileHandler("/logs/ATTACK-replicate.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger("Sniffer-Replicate")
 
@@ -50,7 +50,6 @@ def find_analysis_files():
         for f in os.listdir(SHARED_DIR)
         if f.endswith(".analysis.json")
         and not f.endswith(".processed")
-        and not f.endswith(".failed")
         and os.path.getsize(os.path.join(SHARED_DIR, f)) > MIN_FILE_SIZE
     ]
 
@@ -256,21 +255,6 @@ def replicate_send_metrics():
         logger.error(f"Error enviando métricas cifradas: {str(e)}")
         return False
 
-
-def mark_file_as_processed(success=True):
-    """Renombra el archivo para marcarlo como procesado o fallido"""
-    global current_file
-    try:
-        if success:
-            new_path = current_file + ".processed"
-        else:
-            new_path = current_file + ".failed"
-
-        os.rename(current_file, new_path)
-        logger.info(f"Archivo marcado como {'procesado' if success else 'fallido'}.")
-    except Exception as e:
-        logger.error(f"Error marcando archivo: {str(e)}")
-
 # Modelo de entrada
 class ChoiceRequest(BaseModel):
     choice: str
@@ -279,21 +263,31 @@ class ChoiceRequest(BaseModel):
 def execute_choice(request: ChoiceRequest):
     """Ejecuta la acción seleccionada por el usuario."""
     global current_file
+    choice = request.choice
+    state = False
+    
     if not current_file:
         logger.info("No hay un archivo seleccionado. Buscando archivos.")
         files = find_analysis_files()
         if files:
             current_file = os.path.join(SHARED_DIR, files[0])
-            logger.info(f"Archivo seleccionado: {current_file}")
-            extract_parameters_from_analysis()
+            if current_file:
+                logger.info(f"Archivo seleccionado: {current_file}.")
+                extract_parameters_from_analysis()
+            else:
+                message = "No se encuentran archivos disponibles para procesarse."
+                return {"message": message}
         
     if choice == "1":
-        direction = "device->gateway"
-        state = replicate_authentication(direction, gateway_host_skafs)
+        state = replicate_authentication("device->gateway", gateway_host_skafs)
     elif choice == "2":
         state = replicate_send_metrics()
     elif choice == "3":
-        current_file = ""  # Limpiar el archivo actual para buscar otro
+            new_path = current_file + ".processed"
+            os.rename(current_file, new_path)
+            current_file = ""  # Limpiar el archivo actual para buscar otro
+            message = "El archivo actual se ha marcado como procesado."
+            return {"message": message}  
     elif choice == "4":
         logger.info("Saliendo del servicio.")
         

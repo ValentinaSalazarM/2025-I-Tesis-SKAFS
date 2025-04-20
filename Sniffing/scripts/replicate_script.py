@@ -275,8 +275,7 @@ def execute_choice(request: ChoiceRequest):
                 logger.info(f"Archivo seleccionado: {current_file}.")
                 extract_parameters_from_analysis()
             else:
-                message = "No se encuentran archivos disponibles para procesarse."
-                return {"message": message}
+                return {"message": "No se encuentran archivos disponibles para procesarse."}
         
     if choice == "1":
         state = replicate_authentication("device->gateway", gateway_host_skafs)
@@ -285,9 +284,8 @@ def execute_choice(request: ChoiceRequest):
     elif choice == "3":
             new_path = current_file + ".processed"
             os.rename(current_file, new_path)
-            current_file = ""  # Limpiar el archivo actual para buscar otro
-            message = "El archivo actual se ha marcado como procesado."
-            return {"message": message}  
+            current_file = ""  
+            return {"message": "El archivo actual se ha marcado como procesado."}  
     elif choice == "4":
         logger.info("Saliendo del servicio.")
         

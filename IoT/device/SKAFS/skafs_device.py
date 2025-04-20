@@ -70,7 +70,7 @@ def IoT_registration():
             C_F1 = challenges.get("C_F1")
             if C_F0 is None or C_F1 is None:
                 raise KeyError(
-                    "[REG] Faltan desafíos C_F0 o C_F1 en la respuesta del CA."
+                    "Faltan desafíos C_F0 o C_F1 en la respuesta del CA."
                 )
             logger.info("[REG] Desafíos recibidos del CA.")
 
@@ -200,7 +200,7 @@ def mutual_authentication():
 
         # Paso 6: Recibir mensaje M_4 del Gateway y actualizar parámetros
         if not all(key in response for key in ["M_4"]):
-            raise KeyError("[AUTH] Faltan argumentos en la respuesta del Gateway.")
+            raise KeyError("Faltan argumentos en la respuesta del Gateway.")
         IoT_K_previous, IoT_C_1, state = updating_challenge_DPUF_configuration(
             response["M_4"],
             IoT_K_s,
@@ -313,7 +313,6 @@ def send_encrypted_metrics():
                 not authentication_parameters
                 or "session_key" not in authentication_parameters
             ):
-                logger.error("[METRICS] No hay sesión activa. Autenticación requerida.")
                 raise ValueError("El dispositivo no está autenticado con el Gateway.")
 
             # Generar datos simulados del sensor
@@ -331,7 +330,7 @@ def send_encrypted_metrics():
             # Obtener la clave de sesión
             K_s_bytes = authentication_parameters.get("session_key")
             if not K_s_bytes:
-                raise ValueError("[METRICS] Clave de sesión no encontrada.")
+                raise ValueError("Clave de sesión no encontrada.")
 
             # Cifrar las métricas con AES en modo CBC
             cipher = AES.new(K_s_bytes, AES.MODE_CBC, iv)

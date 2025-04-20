@@ -141,10 +141,7 @@ def handle_IoT_registration(client_socket, message):
 
         # Verificar si el dispositivo ya está registrado
         if iot_identity in registered_devices:
-            logger.warning(
-                f"[REG Dispositivo] El dispositivo con ID {iot_identity} ya está registrado."
-            )
-            raise ValueError("El dispositivo ya está registrado.")
+            raise ValueError("El dispositivo con ID {iot_identity} ya está registrado.")
 
         logger.info(
             f"[REG Dispositivo] Recibidos datos del dispositivo IoT: iot_identity={iot_identity}, DPUF_C1={DPUF_C1}, FPUF_Fixed_F0={FPUF_Fixed_F0}, FPUF_Fixed_F1={FPUF_Fixed_F1}"
@@ -185,15 +182,15 @@ def handle_IoT_registration(client_socket, message):
         logger.info("[REG Dispositivo] Respuesta enviada al dispositivo IoT.")
 
     except KeyError as e:
-        logger.error(f"Clave faltante en los datos del dispositivo IoT: {e}")
+        logger.error(f"[REG Dispositivo] Clave faltante en los datos del dispositivo IoT: {e}")
         response = {"status": "error", "message": str(e)}
         client_socket.sendall(json.dumps(response).encode("utf-8"))
     except ValueError as e:
-        logger.error(f"Error en el registro del dispositivo IoT: {e}")
+        logger.error(f"[REG Dispositivo] Error en el registro del dispositivo IoT: {e}")
         response = {"status": "error", "message": str(e)}
         client_socket.sendall(json.dumps(response).encode("utf-8"))
     except Exception as e:
-        logger.error(f"Error inesperado durante el registro del dispositivo IoT: {e}")
+        logger.error(f"[REG Dispositivo] Error inesperado durante el registro del dispositivo IoT: {e}")
         response = {"status": "error", "message": str(e)}
         client_socket.sendall(json.dumps(response).encode("utf-8"))
     finally:
@@ -262,15 +259,15 @@ def handle_gateway_registration(client_socket, message):
         logger.info(f"Gateway registrado con éxito: {gateway_identity}")
 
     except KeyError as e:
-        logger.error(f"Clave faltante en los datos del Gateway: {e}")
+        logger.error(f"[REG Gateway] Clave faltante en los datos del Gateway: {e}")
         response = {"status": "error", "message": str(e)}
         client_socket.sendall(json.dumps(response).encode("utf-8"))
     except ValueError as e:
-        logger.error(f"Error en el registro del Gateway: {e}")
+        logger.error(f"[REG Gateway] Error en el registro del Gateway: {e}")
         response = {"status": "error", "message": str(e)}
         client_socket.sendall(json.dumps(response).encode("utf-8"))
     except Exception as e:
-        logger.error(f"Error inesperado durante el registro del Gateway: {e}")
+        logger.error(f"[REG Gateway] Error inesperado durante el registro del Gateway: {e}")
         response = {"status": "error", "message": str(e)}
         client_socket.sendall(json.dumps(response).encode("utf-8"))
     finally:
@@ -304,7 +301,6 @@ def handle_mutual_authentication(gateway_socket, decoded_message):
                 current_iot_identity = iot_identity
 
         if not current_iot_identity or not current_gateway_identity:
-            logger.error("[AUTH] No hay sesión activa. Autenticación requerida.")
             raise PermissionError(
                 "El Gateway o el Device no está autenticado con el CA, se restringe el acceso."
             )
@@ -371,15 +367,15 @@ def handle_mutual_authentication(gateway_socket, decoded_message):
         current_gateway_identity = None
         current_iot_identity = None
     except PermissionError as e:
-        logger.error(f"Error de autenticación: {e}")
+        logger.error(f"[AUTH] Error de autenticación: {e}")
         response = {"status": "failed", "message": str(e)}
         gateway_socket.sendall(json.dumps(response).encode("utf-8"))
     except KeyError as e:
-        logger.error(f"Clave faltante en los datos recibidos: {e}")
+        logger.error(f"[AUTH] Clave faltante en los datos recibidos: {e}")
         response = {"status": "error", "message": str(e)}
         gateway_socket.sendall(json.dumps(response).encode("utf-8"))
     except Exception as e:
-        logger.error(f"Error durante la autenticación mutua: {e}")
+        logger.error(f"[AUTH] Error durante la autenticación mutua: {e}")
         response = {"status": "error", "message": str(e)}
         gateway_socket.sendall(json.dumps(response).encode("utf-8"))
     finally:

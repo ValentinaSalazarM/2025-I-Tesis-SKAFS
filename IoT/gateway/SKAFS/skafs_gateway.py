@@ -182,7 +182,7 @@ def handle_mutual_authentication(client_socket, message):
         IoT_M1 = json.loads(client_socket.recv(4096).decode("utf-8"))
         if not all(key in IoT_M1 for key in ["M_1", "ID*", "r_2*", "K_i*", "r_3*"]):
             raise KeyError(
-                "[AUTH] Faltan argumentos en la respuesta del dispositivo IoT."
+                "Faltan argumentos en la respuesta del dispositivo IoT."
             )
         logger.info(f"[AUTH] Datos recibidos del IoT Device: {IoT_M1}")
 
@@ -238,7 +238,7 @@ def handle_mutual_authentication(client_socket, message):
                 "D_sync_CA_G",
             ]
         ):
-            raise KeyError("[AUTH] Faltan argumentos en la respuesta de la CA.")
+            raise KeyError("Faltan argumentos en la respuesta de la CA.")
         CA_sigma_3 = ca_response.get("CA_sigma_3")
         Epison_2_1 = ca_response.get("Epison_2_1")
         Epison_2_2 = ca_response.get("Epison_2_2")
@@ -271,7 +271,7 @@ def handle_mutual_authentication(client_socket, message):
         data = json.loads(client_socket.recv(4096).decode("utf-8"))
         if "K_i_next_obfuscated" not in data:
             raise KeyError(
-                "[AUTH] Falta K_i_next_obfuscated en la respuesta del dispositivo IoT."
+                "Falta K_i_next_obfuscated en la respuesta del dispositivo IoT."
             )
 
         return_data = getting_encrypting_next_session_key(
@@ -440,7 +440,7 @@ def checking_synchronization_bet_gateway_IoT(
         ), "El K anterior (K_p) no ha sido usado en la generación del mensaje de autenticación."
     else:
         logger.error(
-            "No coinciden las llaves de sincronización anteriores ni actuales."
+            "[AUTH] No coinciden las llaves de sincronización anteriores ni actuales."
         )
 
     G_M_2 = Hash(G_K_a, Sync_IoT_G, G_r_1, G_r_3)
